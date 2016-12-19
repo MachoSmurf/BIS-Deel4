@@ -22,7 +22,6 @@
 		<div class="navBody">
 			<ul>
 				<li><a href="?p=home" <?php if ($activePage == "home") {echo "class=\"active\"";} ?> >Home</a></li>
-<<<<<<< HEAD
 				<li><a href="?p=systeem" <?php if ($activePage == "systeem") {echo "class=\"active\"";} ?> >Systeem Registratie</a></li>
 				<li><a href="?p=licentie" <?php if ($activePage == "licentie") {echo "class=\"active\"";} ?> >Licentie Beheer</a></li>
 				<li><a href="?p=stock" <?php if ($activePage == "stock") {echo "class=\"active\"";} ?> >Voorraad Beheer</a></li>
@@ -36,11 +35,6 @@
 				<?
 				}
 				?>
-=======
-				<li><a href="?p=systeem" <?php if ($activePage == "systeem") {echo "class=\"active\"";} ?> >Systeemregistratie</a></li>
-				<li><a href="?p=licentie" <?php if ($activePage == "licentie") {echo "class=\"active\"";} ?> >Licentiebeheer</a></li>
-				<li><a href="?p=voorraad" <?php if ($activePage == "voorraad") {echo "class=\"active\"";} ?> >Voorraadbeheer</a></li>
->>>>>>> refs/remotes/origin/master
 			</ul>
 		</div>
 		<div class="navFooter">

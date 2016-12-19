@@ -124,15 +124,9 @@
 				logout();
 				break;
 
-<<<<<<< HEAD
 			case 'stock':
 				outputFramework("Voorraad Beheer", "stock");		
 				include './content/stock.inc.php';
-=======
-			case 'voorraad':
-				outputFramework("Voorraad Beheer", "voorraad");		
-				include './content/vrd_beheer.inc.php';
->>>>>>> refs/remotes/origin/master
 				break;
 
 			case 'licentie':
@@ -146,11 +140,7 @@
 				break;
 
 			case 'settings':
-<<<<<<< HEAD
 				outputFramework("Instellingen", "settings");
-=======
-				outputFramework("Instellingen", "instellingen");
->>>>>>> refs/remotes/origin/master
 				include './content/usrSettings.inc.php';
 				break;
 
