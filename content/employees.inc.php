@@ -90,7 +90,7 @@
 		{
 			?>
 			<tr>
-				<td><? echo $emp_id; ?></td>
+				<td><a href="?p=overview&employee_id=<? echo $emp_id; ?>"><? echo $emp_id; ?></a></td>
 				<td><? echo $voornaam; ?></td>
 				<td><? echo $achternaam; ?></td>
 				<td><? echo $email; ?></td>

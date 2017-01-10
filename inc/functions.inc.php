@@ -159,6 +159,16 @@
 				include './content/log.inc.php';
 				break;
 
+			case 'errortest':
+				outputFramework("Errortest", "error");
+				include './content/errortest.inc.php';
+				break;
+
+			case 'overview':
+				outputFramework("Overzicht", "overzicht");
+				include './content/overview.inc.php';
+				break;
+
 			default:
 				outputFramework("Home", "home");
 				include './content/home.inc.php';
@@ -409,10 +419,22 @@
 			$result;
 			for ($i=0; $i<$amount; $i++)
 			{
+				$stmt;
+				if ($warranty != null)
+				{
+					$stmt	=	$dbConn->prepare("INSERT INTO stock (product_id, warranty, servicetag, status) VALUES (?, ?, ?, ?)");
+					$status = 	1;
+					$stmt 	-> 	bind_param("issi", $typeID, $warranty, $servicetag, $status);
+				}
+				else
+				{
+					$stmt	=	$dbConn->prepare("INSERT INTO stock (product_id, servicetag, status) VALUES (?, ?, ?)");
+					$status = 	1;
+					$stmt 	-> 	bind_param("isi", $typeID, $servicetag, $status);
+				}
 				//simply add this product to the stock for i times (amount)
-				$stmt	=	$dbConn->prepare("INSERT INTO stock (product_id, warranty, servicetag, status) VALUES (?, ?, ?, ?)");
-				$status = 	1;
-				$stmt 	-> 	bind_param("issi", $typeID, $warranty, $servicetag, $status);
+				
+				echo $dbConn->error;
 				
 				if ($stmt->execute())
 				{				
@@ -421,16 +443,14 @@
 				}
 				else
 				{
-					echo $dbConn-> error . "<br>";
 					$result = 2;
-					//break;
 				}
 				$stmt -> close();	
 			}
 			
-			if ($result)
+			if ($result == 1)
 			{
-				addLogEntry(null, $typeID, null, null, null, 51, $amount, null);
+				addLogEntry(null, null, null, null, $typeID, 51, $amount, null);
 			}
 			return $result;		
 		}
@@ -449,10 +469,10 @@
 		global $dbConn;
 
 		//fetch an available stock ID from the database
-		$stmtFetch	=	$dbConn->prepare("SELECT ID FROM stock WHERE product_id=? AND status=1");
+		$stmtFetch	=	$dbConn->prepare("SELECT ID, servicetag FROM stock WHERE product_id=? AND status=1");
 		$stmtFetch	->	bind_param("i", $productID);
 		$stmtFetch	->	execute();
-		$stmtFetch	->	bind_result($stockID);
+		$stmtFetch	->	bind_result($stockID, $servicetag);
 		$stmtFetch	->	fetch();
 		$stmtFetch	->	close();
 
@@ -464,31 +484,49 @@
 			$stmtAssign	->	bind_param("iii", $employeeID, $newStatus, $stockID);
 			if ($stmtAssign	->	execute())
 			{
-				return 1;
+				return array(1, $stockID, $servicetag);
 				addLogEntry(null, $typeID, $employeeID, null, null, 52, $newStatus, null);
 			}
 			else
 			{
-				return 2;
+				return array(2);
 			}
 		}
 		else
 		{
 			//no unasigned product available
-			return 0;
+			return array(0);
 		}		
 	}
 
 
-	function updateStatus($stockID, $newStatus)
+	function updateStatus($stockID, $newStatus, $noLog=false)
 	{
 		global $dbConn;
 
 		$stmt	=	$dbConn->prepare("UPDATE stock SET status=?, employee_id=NULL WHERE ID=?");
 		$stmt	->	bind_param("ii", $newStatus, $stockID);
 		if ($stmt	->	execute())
-		{				
-			addLogEntry(null, $stockID, null, null, null, 52, $newStatus, null);
+		{			
+			if (!$noLog)
+			{	
+				addLogEntry(null, $stockID, null, null, null, 52, $newStatus, null);
+			}
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	function disconnectStock($stockID, $status)
+	{
+		global $dbConn;
+
+		if (updateStatus($stockID, $status, true))
+		{
+			//addLogEntry(null, $stockID, null, null, null, 52, $newStatus, null);
 			return true;
 		}
 		else
@@ -525,5 +563,189 @@
 		}
 		$stmt 	->	close();
 	}
+
+
+	/************************************************************************************
+	/*
+	/*		SOFTWARE AND LICENCE MANAGEMENT FUNCTIONS START HERE
+	/*
+	/***********************************************************************************/
+
+
+	function addSoftware($name, $type, $description)
+	{
+		global $dbConn;
+
+		if (!checkProduct($name, $type))
+		{
+
+			$q = $dbConn->prepare("INSERT INTO `product` (name, type, description, software) VALUES (?, ?, ?, 1)");	
+
+			$q	->	bind_param("sss", $name, $type, $description);
+
+			if ($q	->	execute())
+			{				
+				$newID	=	$q->insert_id;
+				$result = 	1;
+				addLogEntry(null, null, null, null, $newID, 61, null, null);
+			}
+			else
+			{
+				//echo $dbConn-> error;
+				$result = 2;
+			}
+
+			return $result;
+		}
+		else
+		{
+
+			return 3;
+		}
+	}
+
+
+	function addLicence($name, $typeID, $amount, $expiryDate, $key)
+	{
+		global $dbConn;
+
+		if($typeID != null)
+		{	
+			$result;
+			/*if ($expiryDate == null)
+			{
+				$expiryDate = nu;
+			}*/
+			for ($i=0; $i<$amount; $i++)
+			{
+				//simply add this product to the stock for i times (amount)
+				if ($expiryDate == null)
+				{
+					$stmt	=	$dbConn->prepare("INSERT INTO licence (product_id, licencekey) VALUES (?, ?)");
+					$stmt 	-> 	bind_param("is", $typeID, $key);
+				}
+				else
+				{
+					$stmt	=	$dbConn->prepare("INSERT INTO licence (product_id, exp_date, licencekey) VALUES (?, ?, ?)");
+					$stmt 	-> 	bind_param("iss", $typeID, $expiryDate, $key);
+				}
+				
+				
+				if ($stmt->execute())
+				{				
+					$result = 1;		
+				}
+				else
+				{
+					echo $stmt->error;
+					$result = 2;
+				}
+				$stmt -> close();	
+			}
+			
+			if ($result == 1)
+			{
+				addLogEntry(null, null, null, null, $typeID, 71, $amount, null);
+			}
+			return $result;		
+		}
+	}
+
+
+
+	function assignLicenceToSystem($stockID, $productID)
+	{
+		global $dbConn;
+
+		//fetch an available licence ID from the database
+		$stmtFetch	=	$dbConn->prepare("SELECT ID, licencekey FROM licence WHERE product_id=? AND stock_id IS NULL AND employee_id IS NULL");
+		$stmtFetch	->	bind_param("i", $productID);
+		$stmtFetch	->	execute();
+		$stmtFetch	->	bind_result($licenceID, $licenceKey);
+		$stmtFetch	->	fetch();
+		$stmtFetch	->	close();
+
+		if ($licenceID != null)
+		{
+			//assign this stockID to $employeeID
+			$stmtAssign	=	$dbConn->prepare("UPDATE licence SET stock_id=? WHERE ID=?");
+			$stmtAssign	->	bind_param("ii", $stockID, $licenceID);
+			if ($stmtAssign	->	execute())
+			{
+
+				//addLogEntry($userID, $stockID, $employeeID, $licenceID, $productID, $actionCode, $param1, $param2)
+				addLogEntry(null, $stockID, null, $licenceID, null, 74, null, null);
+				return array(1, $licenceID, $licenceKey);				
+			}
+			else
+			{
+				//SQL error
+				return array(2);
+			}
+		}
+		else
+		{
+			//no unasigned product available
+			return array(0);
+		}		
+	}
+
+	function assignLicenceToEmployee($productID, $employeeID)
+	{
+		global $dbConn;
+
+		//fetch an available licence ID from the database
+		$stmtFetch	=	$dbConn->prepare("SELECT ID, licencekey FROM licence WHERE product_id=? AND stock_id IS NULL AND employee_id IS NULL");
+		$stmtFetch	->	bind_param("i", $productID);
+		$stmtFetch	->	execute();
+		$stmtFetch	->	bind_result($licenceID, $licenceKey);
+		$stmtFetch	->	fetch();
+		$stmtFetch	->	close();
+
+		if ($licenceID != null)
+		{
+			//assign this stockID to $employeeID
+			$stmtAssign	=	$dbConn->prepare("UPDATE licence SET employee_id=? WHERE ID=?");
+			$stmtAssign	->	bind_param("ii", $employeeID, $licenceID);
+			if ($stmtAssign	->	execute())
+			{
+				return array(1, $licenceID, $licenceKey);
+				//addLogEntry($userID, $stockID, $employeeID, $licenceID, $productID, $actionCode, $param1, $param2)
+				addLogEntry(null, null, $employeeID, $licenceID, null, 73, null, null);
+			}
+			else
+			{
+				//SQL error
+				return array(2);
+			}
+		}
+		else
+		{
+			//no unasigned product available
+			return array(0);
+		}		
+	}
+
+	function disconnectLicence($licenceID)
+	{
+		global $dbConn;
+
+		$stmt 	=	$dbConn->prepare("UPDATE licence SET employee_id=NULL, stock_id=NULL WHERE ID=?");
+		$stmt 	->	bind_param("i", $licenceID);
+		if ($stmt 	->	execute())
+		{
+			echo $stmt->error;
+			echo $dbConn->error;
+			//addLogEntry($userID, $stockID, $employeeID, $licenceID, $productID, $actionCode, $param1, $param2)
+			addLogEntry(null, null, null, $licenceID, null, 72, null, null);
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+		$stmt 	->	close();
+	}
+
 
 ?>
