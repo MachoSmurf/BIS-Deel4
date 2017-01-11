@@ -95,7 +95,7 @@
 
 		if ($_POST["submit"] == "Voorraad Toevoegen")
 		{
-			$stmt	=	$dbConn->prepare("SELECT DISTINCT(name) FROM product");
+			$stmt	=	$dbConn->prepare("SELECT DISTINCT(name) FROM product WHERE software=0");
 			$stmt	->	execute();
 			$stmt	->	bind_result($n);
 
@@ -123,8 +123,25 @@
 				  }
 			</script>		
 
+			<script>
+				function checkWarranty(){
+					if (document.forms["addForm"]["warranty"].value == "")
+					{
+						var response = confirm("Weet u zeker dat u dit product wilt toevoegen zonder garantiedatum?");
+						if (response == true)
+						{
+							return true;
+						}
+						else
+						{
+							return false;
+						}
+					}
+				}
+			</script>
+
 			<div class="inputContainer">
-			<form action="?p=stock" method="post">
+			<form action="?p=stock" method="post" name="addForm" onsubmit="return checkWarranty();">
 				<div class="inputLine">
 					<div class="inputLeft">Naam: </div>
 					<div class="inputRight"><select name="name" id="select1" onchange="ajaxRequest(this)">
@@ -177,7 +194,7 @@
 		{
 			$showOverview = true;
 			$assign	=	assignStock($_POST["employee_id"], $_POST["prodID"]);
-			switch ($assign) {
+			switch ($assign[0]) {
 				case 0:
 					?>
 						<script>alert('Geen product beschikbaar om toe te wijzen');</script>
@@ -186,7 +203,7 @@
 					
 				case 1:
 					?>
-						<script>alert('Product toegewezen');</script>
+						<script>alert('Product toegewezen. Vooraad ID: <? echo $assign[1]; ?>, Servicetag: <? echo $assign[2]; ?>');</script>
 					<?
 					break;
 
@@ -242,8 +259,14 @@
 				echo "Niet alle vereiste velden zijn ingevuld. Ga terug en probeer het nog eens.";
 			}
 		}
-
 	}
+
+	/************************************************************************************
+	/*
+	/*		Check if product details need to be updated
+	/*
+	/***********************************************************************************/
+
 
 	if ((isset($_GET["a"])) && (isset($_GET["id"])))
 	{
@@ -273,12 +296,12 @@
 		</div>	
 		<?php
 		
-		//haal huidige Lijst met voorraad op op
-		$query = $dbConn->prepare("SELECT DISTINCT s.product_id, p.name, p.type, COUNT(s.product_id) FROM stock s, product p WHERE s.status=1 AND p.id=s.product_id AND s.status=1 GROUP BY s.product_id ORDER BY p.name, p.type ASC");
+		//haal huidige Lijst met voorraad op
+		$query = $dbConn->prepare("SELECT DISTINCT s.product_id, p.name, p.type, COUNT(s.product_id) FROM stock s, product p WHERE p.id=s.product_id AND p.software=0 GROUP BY s.product_id ORDER BY p.name, p.type ASC");
 		$query -> execute();
 		$query -> bind_result($prod_id, $prod_name, $prod_type, $count);
+		$query -> store_result();
 
-		echo "<table>";
 		?>
 		<div>
 			<table class="tbl_standard">
@@ -286,19 +309,25 @@
 					<th>Product ID</th>
 					<th>Product</th>
 					<th>Model/Type</th>
-					<th>Aantal op voorraad</th>
+					<th>Aantal Beschikbaar</th>
 					<th></th>
 				</tr>
 			<?
 
 			while($query -> fetch())
 			{
+				$countStmt	=	$dbConn->prepare("SELECT ID FROM stock WHERE product_id=? AND status=1");
+				$countStmt	->	bind_param("i", $prod_id);
+				$countStmt	->	execute();
+				$countStmt	->	store_result();
+				$stockAvailable = $countStmt->num_rows;
+
 				?>
 				<tr>
 					<td><? echo $prod_id; ?></td>
 					<td><a href="?p=stock&a=details&id=<? echo $prod_id; ?>"><? echo $prod_name; ?></a></td>
 					<td><? echo $prod_type; ?></td>
-					<td><? echo $count; ?></td>
+					<td><? echo $stockAvailable."/".$count; ?></td>
 					<td><a href="#" onclick="showModal(<? echo "'" . $prod_name . "'," . $prod_id; ?>); return false;">Toewijzen</a></td>
 				</tr>
 				<?

@@ -29,7 +29,7 @@ Nieuw in gebruik genomen action codes ook implementeren in log.inc.php!
 	0020
 	0021				Employee Added to database
 	0022				Employee edited
-	0023				Employee status changed
+	0023				Employee status changed (deleted)
 	0024
 	0025
 	0026
@@ -67,8 +67,8 @@ Nieuw in gebruik genomen action codes ook implementeren in log.inc.php!
 	0058
 	0059
 	0060
-	0061				
-	0062
+	0061				New Software Added to database 
+	0062				Product edited
 	0063
 	0064
 	0065
@@ -77,3 +77,13 @@ Nieuw in gebruik genomen action codes ook implementeren in log.inc.php!
 	0068
 	0069
 	0070
+	0071				Licences added to database (parameter1 amount)
+	0072				Licence unlinked
+	0073				Licence linked to employee
+	0074				Licence linked to stock
+	0075
+	0076
+	0077
+	0078
+	0079
+	0080

@@ -7,7 +7,7 @@
 
 	if($_SESSION["level"] == 2)
 	{
-		$logStmt	=	$dbConn->prepare("SELECT l.ID, u.username AS owner, us.username AS subject, pr.name AS item, pro.name ,e.voornaam, e.achternaam, l.licence_id, l.action, l.time, l.parameter1, l.parameter2
+		/*$logStmt	=	$dbConn->prepare("SELECT l.ID, u.username AS owner, us.username AS subject, pr.name AS item, pro.name ,e.voornaam, e.achternaam, l.licence_id, l.action, l.time, l.parameter1, l.parameter2
 	FROM log l 
 		LEFT JOIN user u ON l.owner_id = u.user_id
 		LEFT JOIN user us ON l.user_id = us.user_id        
@@ -15,9 +15,19 @@
         LEFT JOIN stock s ON l.stock_id = s.ID
         LEFT JOIN product pr ON s.product_id = pr.ID
         LEFT JOIN product pro ON l.product_id = pro.ID
+        	ORDER BY l.time DESC LIMIT 0, 30");*/
+
+        $logStmt	=	$dbConn->prepare("SELECT l.ID, u.username AS owner, us.username AS subject, l.action, l.time, l.parameter1, l.parameter2, p.name, p.type, e.voornaam, e.achternaam, li.ID, s.ID
+	FROM log l 
+		LEFT JOIN user u ON l.owner_id = u.user_id
+		LEFT JOIN user us ON l.user_id = us.user_id
+        LEFT JOIN product p ON l.product_id = p.ID
+        LEFT JOIN employee e ON l.employee_id = e.ID
+        LEFT JOIN stock s ON l.stock_id = s.ID
+        LEFT JOIN licence li ON l.licence_id = li.ID
         	ORDER BY l.time DESC LIMIT 0, 30");
 		$logStmt	->	execute();
-		$logStmt	->	bind_result($logID, $owner, $subjectUser, $stockItemName, $productName, $empFirstname, $empLastname, $licenceID, $action, $time, $param1, $param2);
+		$logStmt	->	bind_result($logID, $owner, $subjectUser, $action, $time, $param1, $param2, $productName, $productType, $empFirstname, $empLastname, $licenceID, $stockID);
 
 		?>
 
@@ -73,7 +83,7 @@
 									break;
 
 									case 23:
-										echo $owner . " heeft de status van medewerker " . $empFirstname ." " . $empLastname . " bewerkt."; 
+										echo $owner . " heeft de medewerker " . $empFirstname ." " . $empLastname . " verwijderd."; 
 									break;
 
 									//product events
@@ -89,7 +99,7 @@
 									//stock events
 
 									case 51:
-										echo $owner . " heeft " . $param1 . " nieuwe " . $stockItemName . " toegevoegd aan de voorraad."; 
+										echo $owner . " heeft " . $param1 . " nieuwe " . $productName . " " . $productType . " toegevoegd aan de voorraad."; 
 									break;
 
 									case 52:
@@ -121,11 +131,41 @@
 											break;
 										}
 										$statusText .= "</span>";
-										echo $owner . " heeft de status van het item " . $stockItemName . " aangepast naar: " . $statusText; 
+										echo $owner . " heeft de status van het item " . $productName . " aangepast naar: " . $statusText; 
 									break;
 
+									case 61:
+										//New Software Added to database
+										echo $owner . " heeft het softwarepakket " . $productName . " toegevoegd aan de lijst met beschikbare producten."; 
+										break;
+
+									case 62:
+										//Software edited
+										echo $owner . " heeft het softwarepakket " . $productName . " bewerkt.";
+										break;
+
+									case 71:
+										//Licences added to database (parameter1 amount)
+										echo $owner . " heeft " . $param1 . " licenties van " . $productName . " " . $productType . " toegevoegd."; 
+										break;
+
+									case 72:
+										//Licence status changed (parameter1 status)
+										echo $owner . " heeft licentie #" . $licenceID . " losgekoppeld.";
+										break;
+
+									case 73:
+										//Licence status changed (parameter1 status)
+										echo $owner . " heeft licentie #" . $licenceID . " gekoppeld aan medewerker " . $empFirstname ." " . $empLastname;
+										break;
+
+									case 74:
+										//Licence status changed (parameter1 status)
+										echo $owner . " heeft licentie #" . $licenceID . " gekoppeld aan systeem #" . $stockID;
+										break;
+
 									default:
-										echo "Log entry unknown";
+										echo "Log entry unknown (" . $action . ")";
 									break;
 								}
 								?>

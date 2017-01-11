@@ -103,7 +103,20 @@
 					}
 					?>
 				</td>
-				<td><? echo $warranty; ?></td>
+				<td><? 
+				echo $warranty; 
+				if (isset($warranty))
+							{
+								if (strtotime($warranty) > time())
+								{
+									?><img src="./img/Checked-48.png" class="licenceExpCheck"><?
+								}
+								if (strtotime($warranty) < time())
+								{
+									?><img src="./img/Cancel-50.png" class="licenceExpCheck"><?
+								}
+							}
+				?></td>
 				<td><? echo $voornaam . " " . $achternaam; ?></td>
 				<td><? echo $servicetag; ?></td>
 				<td><? echo $ip; ?></td>

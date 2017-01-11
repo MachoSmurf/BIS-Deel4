@@ -5,25 +5,22 @@
 		die();
 	}
 
-	$stmt	=	$dbConn->prepare("SELECT e.voornaam, e.achternaam, p.name, p.type FROM employee e, stock s, product p WHERE e.ID = s.employee_id AND s.product_id=p.ID");
+	$stmt	=	$dbConn->prepare("SELECT e.voornaam, e.achternaam, e.ID FROM employee e WHERE status = 1");
 	$stmt	->	execute();
-	$stmt	->	bind_result($voornaam, $achternaam, $product, $type);
+	$stmt	->	bind_result($voornaam, $achternaam, $employee_id);
 
 	?>
-	<table class="tbl_standard">
+	Selecteer een medewerker om een overzicht van de toegewezen producten en licenties te bekijken
+	<table class="tbl_standard" style="width: 25%;">
 		<tr>
-			<th>Medewerker</th>
-			<th>Product</th>
-			<th>Model/Type</th>
+			<th>Medewerker</th>			
 		</tr>
 		<?
 			while ($stmt	->	fetch())
 				{
 					?>
 					<tr>
-						<td><? echo $voornaam . " " . $achternaam;?></td>
-						<td><? echo $product;?></td>
-						<td><? echo $type;?></td>
+						<td><a href="?p=overview&employee_id=<? echo $employee_id; ?>"><? echo $voornaam . " " . $achternaam;?></a></td>
 					</tr>
 					<?
 				}
