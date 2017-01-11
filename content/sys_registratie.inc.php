@@ -5,7 +5,7 @@
 		die();
 	}
 
-	$stmt	=	$dbConn->prepare("SELECT e.voornaam, e.achternaam, e.ID FROM employee e");
+	$stmt	=	$dbConn->prepare("SELECT e.voornaam, e.achternaam, e.ID FROM employee e WHERE status = 1");
 	$stmt	->	execute();
 	$stmt	->	bind_result($voornaam, $achternaam, $employee_id);
 

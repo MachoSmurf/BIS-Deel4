@@ -59,6 +59,40 @@
 			}
 		}
 	}
+	elseif(isset($_GET["delete"]))
+	{
+		$deleteID	=	$_GET["delete"];
+
+		$stmt  	=	$dbConn->prepare("SELECT voornaam, achternaam FROM employee WHERE ID=?");
+		$stmt	->	bind_param("i", $deleteID);
+		$stmt	->	execute();
+		$stmt	->	bind_result($voornaam, $achternaam);
+		$stmt	->	fetch();
+
+
+		?>
+			<div class="confirmText">
+				Weet u zeker dat u de mederwerker &quot;<span style="font-weight: bold;"><? echo $voornaam . " " . $achternaam . "(" . $deleteID . ")" ; ?></span>&quot; wilt verwijderen? Alle aan deze medewerker gekoppelde systemen en licenties zullen worden ontkoppeld en terug beschikbaar komen.<br>
+				Deze actie kan niet ongedaan worden gemaakt.
+				<div class="buttonWrapper">
+					<a href="?p=employees&confirmDelete=<? echo $deleteID; ?>"><div class="buttonClass">Ja</div></a>
+					<a href="?p=employees"><div class="buttonClass">Nee</div></a>
+				</div>
+			</div>
+		<?
+	}
+	elseif (isset($_GET["confirmDelete"]))
+	{
+		$deleteID	=	$_GET["confirmDelete"];
+		if (deleteEmployee($deleteID))
+		{
+			?><div class="infoSucces">Medewerker succesvol verwijderd</div><?
+		}
+		else
+		{
+			?><div class="infoError">Medewerker verwijderen mislukt</div><?
+		}
+	}
 	else
 	{
 		?>
@@ -94,7 +128,7 @@
 				<td><? echo $voornaam; ?></td>
 				<td><? echo $achternaam; ?></td>
 				<td><? echo $email; ?></td>
-				<td><!--Edit--></td>
+				<td><a href="?p=employees&delete=<? echo $emp_id; ?>"><img src="./img/Delete-50.png" class="licenceExpCheck"></a></td>
 			</tr>
 			<?
 		}

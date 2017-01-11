@@ -7,7 +7,7 @@
 
 	?>
 	<div>
-		<span style="font-weight: bold;"><?echo $_SESSION["username"];?></span> - <a href=\"?p=logout\">Log out</a>
+		<span style="font-weight: bold;"><?echo $_SESSION["username"];?></span> - <a href="?p=logout">Log out</a>
 	</div>
 
 	<div class="summaryWrapper">	

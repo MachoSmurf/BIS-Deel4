@@ -8,7 +8,7 @@
 	if (isset($_POST["submit"]))
 	{
 		//user wants to add or remove software
-		if ($_POST["submit"] == "Gebruiker Toevoegen")
+		if ($_POST["submit"] == "Gebruiker Toevoegen") 
 		{
 			?>
 			<div class="inputContainer">
@@ -96,7 +96,72 @@
 			}
 		}
 	}
-	else
+	if ((isset($_GET["edit"])) && ($_SESSION["level"] == 2))
+	{
+		if (!isset($_POST["submit"]))
+		{
+			$editID	=	$_GET["edit"];
+
+			$stmt	=	$dbConn->prepare("SELECT username, level FROM user WHERE user_id=?");
+			$stmt	->	bind_param("i", $editID);
+			$stmt	->	execute();
+			$stmt	->	bind_result($username, $level);
+			$stmt	-> 	fetch();
+
+			?>
+
+			<div class="inputContainer">
+				<form action="?p=users&edit=<? echo $editID; ?>" method="post">
+					<div class="inputLine">
+						<div class="inputLeft">Gebruikersnaam:</div>
+						<div class="inputRight"><? echo $username ?></div>
+					</div>				
+					<div class="inputLine">
+						<div class="inputLeft">Administrator:</div>
+						<div class="inputRight"><input type="checkbox" name="admin" value="true" <? if ($level == 2) { echo "checked"; } ?>></div>
+					</div>
+					<div class="inputLine">
+						<div class="inputLeft">Actief:</div>
+						<div class="inputRight"><input type="checkbox" name="active" value="true"<? if ($level > 0) { echo "checked"; } ?>></div>
+					</div>
+					<div class="inputLine">
+						<div class="inputLeft"><input type="submit" name="submit" value="Update"></div>
+					</div>
+				</form>
+			</div>
+		<?
+		}
+		else
+		{
+			$editID = $_GET["edit"];
+			$level = 0;
+			//process data from form
+			if ((isset($_POST["active"])) && (!isset($_POST["admin"])))
+			{
+				$level = 1;
+			}
+			elseif ((isset($_POST["active"])) && (isset($_POST["admin"])))
+			{
+				$level = 2;
+			}
+			else
+			{
+				$level = 0;
+			}
+
+			if (userUpdateRights($editID, $level))
+			{
+				?>
+					<div class="infoSucces">Gebruiker succesvol bijgewerkt</div>
+					<?
+			}
+			else
+			{
+				?><div class="infoError">Update van gebruiker mislukt</div><?
+			}
+		}
+	}
+	if ((!isset($_GET["edit"])) && (!isset($_POST["submit"])))
 	{
 		if ($_SESSION["level"] == 2)
 		{
@@ -109,7 +174,7 @@
 		<?php
 		}		
 		//haal huidige gebruikers op
-		$query = $dbConn->prepare("SELECT user_id, username, email, level FROM user WHERE level > 0 ORDER BY level, user_id ASC");
+		$query = $dbConn->prepare("SELECT user_id, username, email, level FROM user ORDER BY level DESC, user_id ASC");
 		$query -> execute();
 		$query -> bind_result($uID, $username, $email, $level);
 
@@ -128,11 +193,35 @@
 		while($query -> fetch())
 		{
 			?>
-			<tr>
-				<td><? echo $uID; ?></td>
+			<tr style="background-color:<? 
+				switch($level)
+				{
+					case 0:
+						echo "#F2DEDE;";
+					break;
+
+					case 1:
+						echo "#B4CFF7;";
+					break;
+
+					case 2:
+						echo "#DFF0D8;";
+					break;
+
+					default:
+						echo "#F2DEDE;";
+					break;
+				}
+			 ?>">
+				<td><? if ($_SESSION["uID"] != $uID) { ?><a href="?p=users&edit=<? echo $uID; ?>"><? echo $uID; ?></a> <? } else {echo $uID; }?></td>
 				<td><? echo $username; ?></td>
 				<td><? echo $email; ?></td>
-				<td><? echo $level; ?></td>
+				<td><? echo $level; 
+				if ($level == 0)
+				{
+					echo "(inactief)";
+				}
+				?></td>
 				<td>
 				<?
 				/*

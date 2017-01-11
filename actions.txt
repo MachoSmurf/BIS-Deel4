@@ -29,7 +29,7 @@ Nieuw in gebruik genomen action codes ook implementeren in log.inc.php!
 	0020
 	0021				Employee Added to database
 	0022				Employee edited
-	0023				Employee status changed
+	0023				Employee status changed (deleted)
 	0024
 	0025
 	0026

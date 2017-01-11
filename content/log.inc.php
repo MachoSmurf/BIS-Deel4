@@ -83,7 +83,7 @@
 									break;
 
 									case 23:
-										echo $owner . " heeft de status van medewerker " . $empFirstname ." " . $empLastname . " bewerkt."; 
+										echo $owner . " heeft de medewerker " . $empFirstname ." " . $empLastname . " verwijderd."; 
 									break;
 
 									//product events

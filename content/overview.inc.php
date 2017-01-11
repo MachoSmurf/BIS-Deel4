@@ -113,6 +113,11 @@
 		$stmt	->	fetch();
 		$stmt	-> 	close();
 
+
+		$highlightLicence = null;
+		if (isset($_GET["highlightLicence"]))
+			{ $highlightLicence = $_GET["highlightLicence"]; }
+		
 		?>
 		<div>
 			Medewerker Overzicht:<br>
@@ -212,11 +217,7 @@
 					</tr>
 				</thead>
 				<?
-				//fetch Licences attached to this system
-
-				$highlightLicence = null;
-				if (isset($_GET["highlightLicence"]))
-					{ $highlightLicence = $_GET["highlightLicence"]; }
+				//fetch Licences attached to this system				
 				?>
 
 				<tbody>

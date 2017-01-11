@@ -281,9 +281,64 @@
 		}
 	}
 
+	function checkPass($password)
+	{
+		global $dbConn;
+
+		$stmt 	=	$dbConn->prepare("SELECT salt, password FROM user WHERE user_id=?");
+		$stmt 	->	bind_param("i", $_SESSION["uID"]);
+		$stmt 	-> 	execute();
+		$stmt 	-> 	bind_result($salt, $hash);
+		$stmt 	->	fetch();
+
+		$testHash	=	hash("sha256", $password . $salt);
+		if ($testHash == $hash)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	function changePass($newpass)
+	{
+		global $dbConn;
+
+		$salt = generateSalt();
+		$hash = hash("sha256", $newpass . $salt);
+
+		$stmt 	=	$dbConn->prepare("UPDATE user SET password=?, salt=? WHERE user_id=?");
+		$stmt 	->	bind_param("ssi", $hash, $salt, $_SESSION["uID"]);
+		if ($stmt -> execute())
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		$stmt 	->	close();
+	}
 
 
+	function userUpdateRights($userID, $level)
+	{
+		global $dbConn;
 
+		$stmt	=	$dbConn->prepare("UPDATE user SET level=? WHERE user_id=?");
+		$stmt 	->	bind_param("ii", $level, $userID);
+		if ($stmt ->	execute())
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		
+	}
 
 
 	/************************************************************************************
@@ -345,6 +400,70 @@
 		{
 			return true;
 		}
+	}
+
+	function deleteEmployee($employeeID)
+	{
+		global $dbConn;
+
+		//fetch licences assigned to employee
+		$licenceArray = array();
+		$licenceStmt	=	$dbConn->prepare("SELECT ID FROM licence WHERE employee_id = ?");
+		$licenceStmt	->	bind_param("i", $employeeID);
+		$licenceStmt	->	execute();
+		$licenceStmt	->	bind_result($licenceID);
+
+		while($licenceStmt ->	fetch())
+		{
+			array_push($licenceArray, $licenceID);
+		}
+		$licenceStmt -> close();
+		//unlink licences
+
+		foreach($licenceArray as $licence)
+		{
+			$unlinkStmt	=	$dbConn->prepare("UPDATE licence SET employee_id = NULL WHERE ID=?");
+			$unlinkStmt	->	bind_param("i", $licence);
+			$unlinkStmt ->	execute();
+			$unlinkStmt	->	close();
+		}
+
+		//fetch stock assigned to employee
+		$stockArray = array();
+		$stockStmt	=	$dbConn->prepare("SELECT ID FROM stock WHERE employee_id = ?");
+		$stockStmt	->	bind_param("i", $employeeID);
+		$stockStmt	->	execute();
+		$stockStmt	->	bind_result($stockID);
+
+		while($stockStmt ->	fetch())
+		{
+			array_push($stockArray, $stockID);
+		}
+		$stockStmt -> close();
+
+		//unlink stock
+		foreach($stockArray as $stock)
+		{
+			$unlinkStmt	=	$dbConn->prepare("UPDATE stock SET employee_id = NULL WHERE ID=?");
+			$unlinkStmt	->	bind_param("i", $stock);
+			$unlinkStmt ->	execute();
+			$unlinkStmt	->	close();
+		}
+
+		//set employee to inactive
+		$inactiveStmt	=	$dbConn->prepare("UPDATE employee SET status = 0 WHERE ID=?");
+		$inactiveStmt	->	bind_param("i", $employeeID);
+		if ($inactiveStmt ->	execute())
+		{
+			//addLogEntry($userID, $stockID, $employeeID, $licenceID, $productID, $actionCode, $param1, $param2)
+			addLogEntry($employeeID, null, null, null, null, 23, null, null);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+		$inactiveStmt	->	close();
 	}
 
 
@@ -526,7 +645,8 @@
 
 		if (updateStatus($stockID, $status, true))
 		{
-			//addLogEntry(null, $stockID, null, null, null, 52, $newStatus, null);
+			//addLogEntry($userID, $stockID, $employeeID, $licenceID, $productID, $actionCode, $param1, $param2)
+			//addLogEntry(null, $stockID, null, $licenceID, null, 74, null, null);
 			return true;
 		}
 		else
